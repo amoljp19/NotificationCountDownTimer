@@ -15,17 +15,23 @@ import java.text.NumberFormat
 class NotificationService : Service() {
 
     var TAG = "Timers"
-    var hms = ""
+    var hms = "00:00:00"
 
 
     lateinit var notificationManager: NotificationManager
     lateinit var notificationChannel: NotificationChannel
     lateinit var builder: Notification.Builder
+    lateinit var notification: Notification
     private val channelId = "com.softaai.livecoding.notifications"
     private val description = "Test Notification"
 
+
     override fun onBind(arg0: Intent?): IBinder? {
         return null
+    }
+
+    override fun onCreate() {
+        Log.e(TAG, "onCreate")
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -35,13 +41,15 @@ class NotificationService : Service() {
 
         initializeTimerTask(time)
         createTimerNotification(intent)
+        startForeground(
+            1,
+           notification
+        )
 
         return START_STICKY
     }
 
-    override fun onCreate() {
-        Log.e(TAG, "onCreate")
-    }
+
 
     override fun onDestroy() {
         Log.e(TAG, "onDestroy")
@@ -59,7 +67,8 @@ class NotificationService : Service() {
                 hms =
                     f.format(hour).toString() + ":" + f.format(min) + ":" + f.format(sec)
 
-                raiseNotification(builder, hms)
+               raiseNotification(builder, hms)
+
 
             }
 
@@ -92,13 +101,14 @@ class NotificationService : Service() {
                 .setContentIntent(pendingIntent)
         }
 
-        notificationManager.notify(1234, builder.build())
+        notification = builder.build()
+        //notificationManager.notify(1234, notification)
     }
 
     private fun raiseNotification(b: Notification.Builder, hms: String) {
         b.setContentText(hms)
         b.setOngoing(true)
 
-        notificationManager.notify(1234, b.build())
+        notificationManager.notify(1, b.build())
     }
 }
