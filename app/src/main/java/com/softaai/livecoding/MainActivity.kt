@@ -1,16 +1,9 @@
 package com.softaai.livecoding
 
 import android.annotation.SuppressLint
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.widget.RemoteViews
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -19,7 +12,6 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -39,26 +31,16 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    Greeting()
+                    CountDownTimerUI()
                 }
             }
         }
-
-
-
-
-
-    }
-
-    override fun onStop() {
-        super.onStop()
-        //startService(Intent(this, NotificationService::class.java))
     }
 }
 
 @SuppressLint("UnspecifiedImmutableFlag")
 @Composable
-fun Greeting() {
+fun CountDownTimerUI() {
 
     var count by remember { mutableStateOf("0") }
 
@@ -97,8 +79,6 @@ fun Greeting() {
 
         Button(onClick = {
 
-            //timer.start()
-
             if (!textFieldState.equals("")) {
                 object : CountDownTimer(textFieldState.toLong() * 1000 * 60, 1000) {
                     override fun onTick(millisUntilFinished: Long) {
@@ -118,10 +98,9 @@ fun Greeting() {
 
                 val intent = Intent(Intent(context, NotificationService::class.java))
 
-                intent.putExtra("time", textFieldState);
+                intent.putExtra("time", textFieldState)
                 context.startService(intent)
-            }
-            else{
+            } else {
                 count = "Please enter time in minutes"
             }
         }) {
@@ -135,6 +114,6 @@ fun Greeting() {
 @Composable
 fun DefaultPreview() {
     LivecodingTheme {
-        Greeting()
+        CountDownTimerUI()
     }
 }
