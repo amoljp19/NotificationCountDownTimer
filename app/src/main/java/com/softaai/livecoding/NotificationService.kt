@@ -1,11 +1,10 @@
 package com.softaai.livecoding
 
 import android.R
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.Service
+import android.annotation.SuppressLint
+import android.app.*
+import android.content.Context
 import android.content.Intent
-import android.content.Intent.getIntent
 import android.os.Build
 import android.os.CountDownTimer
 import android.os.Handler
@@ -23,6 +22,13 @@ class NotificationService : Service() {
     var Your_X_SECS = 1L
     var hms = ""
     var hmsTime = 0L
+
+    lateinit var notificationManager: NotificationManager
+    lateinit var notificationChannel: NotificationChannel
+    lateinit var builder: Notification.Builder
+    private val channelId = "com.softaai.livecoding.notifications"
+    private val description = "Test Notification"
+
     override fun onBind(arg0: Intent?): IBinder? {
         return null
     }
@@ -33,7 +39,9 @@ class NotificationService : Service() {
         //val intent = getIntent()
         val time = intent?.extras!!.getString("time")
         startTimer(time)
-        createNotification()
+        createTimerNotification(intent)
+        //createNotification()
+
         return START_STICKY
     }
 
@@ -80,6 +88,29 @@ class NotificationService : Service() {
             }
         }
         timer.start()
+    }
+
+    @SuppressLint("UnspecifiedImmutableFlag")
+    private fun createTimerNotification(intent: Intent) {
+        notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+       // val intent = Intent(this, MainActivity::class.java)
+
+        val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            notificationChannel = NotificationChannel(channelId, description, NotificationManager.IMPORTANCE_HIGH)
+            notificationChannel.enableLights(true)
+            notificationChannel.enableVibration(false)
+            notificationManager.createNotificationChannel(notificationChannel)
+
+            builder = Notification.Builder(this, channelId)
+                .setContentTitle("Time : " + hms)
+                .setSmallIcon(R.drawable.ic_dialog_alert)
+                .setContentIntent(pendingIntent)
+        }
+
+        notificationManager.notify(1234, builder.build())
     }
 
     private fun createNotification() {
