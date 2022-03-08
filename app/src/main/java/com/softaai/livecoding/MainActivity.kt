@@ -100,6 +100,7 @@ fun CountDownTimerUI() {
 
                         override fun onFinish() {
                             count = "00:00:00"
+                            textFieldState = ""
                             buttonState = true
                         }
                     }.start()
