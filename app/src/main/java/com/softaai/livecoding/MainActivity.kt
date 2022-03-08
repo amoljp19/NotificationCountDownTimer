@@ -50,6 +50,10 @@ fun CountDownTimerUI() {
         mutableStateOf("")
     }
 
+    var buttonState by remember {
+        mutableStateOf(true)
+    }
+
     val context = LocalContext.current
 
 
@@ -77,33 +81,39 @@ fun CountDownTimerUI() {
             shape = RoundedCornerShape(24.dp),
         )
 
-        Button(onClick = {
+        Button(
+            onClick = {
 
-            if (!textFieldState.equals("")) {
-                object : CountDownTimer(textFieldState.toLong() * 1000 * 60, 1000) {
-                    override fun onTick(millisUntilFinished: Long) {
-                        val f: NumberFormat = DecimalFormat("00")
-                        val hour = millisUntilFinished / 3600000 % 24
-                        val min = millisUntilFinished / 60000 % 60
-                        val sec = millisUntilFinished / 1000 % 60
-                        count =
-                            f.format(hour).toString() + ":" + f.format(min) + ":" + f.format(sec)
+                if (!textFieldState.equals("")) {
+                    buttonState = false
+                    object : CountDownTimer(textFieldState.toLong() * 1000 * 60, 1000) {
+                        override fun onTick(millisUntilFinished: Long) {
+                            val f: NumberFormat = DecimalFormat("00")
+                            val hour = millisUntilFinished / 3600000 % 24
+                            val min = millisUntilFinished / 60000 % 60
+                            val sec = millisUntilFinished / 1000 % 60
+                            count =
+                                f.format(hour)
+                                    .toString() + ":" + f.format(min) + ":" + f.format(sec)
 
-                    }
+                        }
 
-                    override fun onFinish() {
-                        count = "00:00:00"
-                    }
-                }.start()
+                        override fun onFinish() {
+                            count = "00:00:00"
+                            buttonState = true
+                        }
+                    }.start()
 
-                val intent = Intent(Intent(context, NotificationService::class.java))
+                    val intent = Intent(Intent(context, NotificationService::class.java))
 
-                intent.putExtra("time", textFieldState)
-                context.startService(intent)
-            } else {
-                count = "Please enter time in minutes"
-            }
-        }) {
+                    intent.putExtra("time", textFieldState)
+                    context.startService(intent)
+                } else {
+                    count = "Please enter time in minutes"
+                }
+            },
+            enabled = buttonState
+        ) {
             Text("Start")
         }
     }
