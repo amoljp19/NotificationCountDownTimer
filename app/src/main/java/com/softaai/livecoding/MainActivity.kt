@@ -1,6 +1,5 @@
 package com.softaai.livecoding
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -16,8 +15,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.softaai.livecoding.ui.theme.LivecodingTheme
-import java.lang.String
-import java.util.concurrent.TimeUnit
+import java.text.DecimalFormat
+import java.text.NumberFormat
 
 
 class MainActivity : ComponentActivity() {
@@ -50,8 +49,6 @@ fun Greeting() {
 
     Text(text = "" + count)
 
-        //timer.start()
-
     var textFieldState by remember {
         mutableStateOf("")
     }
@@ -65,7 +62,8 @@ fun Greeting() {
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxHeight()
-            .padding(20.dp)) {
+            .padding(20.dp)
+    ) {
 
 
         OutlinedTextField(
@@ -77,47 +75,38 @@ fun Greeting() {
                 textFieldState = it
             },
             placeholder = {
-                Text(text = "Enter your time")
+                Text(text = "Enter time in minutes")
             },
             shape = RoundedCornerShape(24.dp),
         )
-        val v = if (textFieldState.equals("")) "0" else textFieldState
-        val timer = object: CountDownTimer(2000, 1000) {
-            @SuppressLint("DefaultLocale")
-            override fun onTick(millisUntilFinished: Long) {
-                val hms = String.format(
-                    "%02d : %02d : %02d", TimeUnit.MILLISECONDS.toHours(millisUntilFinished),
-                    TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished) - TimeUnit.HOURS.toMinutes(
-                        TimeUnit.MILLISECONDS.toHours(millisUntilFinished)
-                    ),
-                    TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) - TimeUnit.MINUTES.toSeconds(
-                        TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished)
-                    )
-                )
-                count = hms
-            }
-
-            override fun onFinish() {
-
-            }
-        }
-
 
         Button(onClick = {
             val intent = Intent(Intent(context, NotificationService::class.java))
             intent.putExtra("time", textFieldState);
-            context.startService(intent)
+            //context.startService(intent)
             //timer.start()
+
+            if (!textFieldState.equals("")) {
+                object : CountDownTimer(textFieldState.toLong() * 1000 * 60, 1000) {
+                    override fun onTick(millisUntilFinished: Long) {
+                        val f: NumberFormat = DecimalFormat("00")
+                        val hour = millisUntilFinished / 3600000 % 24
+                        val min = millisUntilFinished / 60000 % 60
+                        val sec = millisUntilFinished / 1000 % 60
+                        count =
+                            f.format(hour).toString() + ":" + f.format(min) + ":" + f.format(sec)
+
+                    }
+
+                    override fun onFinish() {
+                        count = "00:00:00"
+                    }
+                }.start()
+            }
         }) {
             Text("Start")
         }
     }
-
-
-
-
-
-
 
 }
 
