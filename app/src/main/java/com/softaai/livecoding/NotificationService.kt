@@ -11,6 +11,8 @@ import android.os.Handler
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import java.text.DecimalFormat
+import java.text.NumberFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -77,17 +79,35 @@ class NotificationService : Service() {
 //            }
 //        }
 
-        val timer = object: CountDownTimer(time!!.toLong(), 1000) {
+        object : CountDownTimer(time!!.toLong() * 1000 * 60, 1000) {
             override fun onTick(millisUntilFinished: Long) {
-               //createNotification(millisUntilFinished.toString())
-                hmsTime = millisUntilFinished
+                val f: NumberFormat = DecimalFormat("00")
+                val hour = millisUntilFinished / 3600000 % 24
+                val min = millisUntilFinished / 60000 % 60
+                val sec = millisUntilFinished / 1000 % 60
+                hms =
+                    f.format(hour).toString() + ":" + f.format(min) + ":" + f.format(sec)
+
+                raiseNotification(builder, hms)
+
             }
 
             override fun onFinish() {
-
+                hms = "00:00:00"
             }
-        }
-        timer.start()
+        }.start()
+
+//        val timer = object: CountDownTimer(time!!.toLong(), 1000) {
+//            override fun onTick(millisUntilFinished: Long) {
+//               //createNotification(millisUntilFinished.toString())
+//                hmsTime = millisUntilFinished
+//            }
+//
+//            override fun onFinish() {
+//
+//            }
+//        }
+//        timer.start()
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")
@@ -105,12 +125,22 @@ class NotificationService : Service() {
             notificationManager.createNotificationChannel(notificationChannel)
 
             builder = Notification.Builder(this, channelId)
-                .setContentTitle("Time : " + hms)
+                .setContentTitle("Timer Notification")
+                .setContentText(hms)
+                .setOngoing(true)
+                .setOnlyAlertOnce(true)
                 .setSmallIcon(R.drawable.ic_dialog_alert)
                 .setContentIntent(pendingIntent)
         }
 
         notificationManager.notify(1234, builder.build())
+    }
+
+    private fun raiseNotification(b: Notification.Builder, hms: String) {
+        b.setContentText(hms)
+        b.setOngoing(true)
+
+        notificationManager.notify(1234, b.build())
     }
 
     private fun createNotification() {
