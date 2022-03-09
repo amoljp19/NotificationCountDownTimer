@@ -6,9 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
-import android.os.CountDownTimer
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -20,9 +18,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LifecycleCoroutineScope
+import androidx.lifecycle.lifecycleScope
 import com.softaai.livecoding.ui.theme.LivecodingTheme
-import java.text.DecimalFormat
-import java.text.NumberFormat
+import kotlinx.coroutines.InternalCoroutinesApi
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
@@ -33,33 +34,62 @@ class MainActivity : ComponentActivity() {
 
     lateinit var hms:String
 
-    lateinit var serviceReceiver: ServiceToActivity
+    //lateinit var serviceReceiver: ServiceToActivity
 
+    lateinit var timerManager: TimerDataStoreManager
+
+
+
+    @OptIn(InternalCoroutinesApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        timerManager = TimerDataStoreManager(this)
 
-        serviceReceiver = ServiceToActivity()
-        val intentSFilter = IntentFilter("ServiceToActivityAction")
-        registerReceiver(serviceReceiver, intentSFilter)
+//
+//        //serviceReceiver = ServiceToActivity()
+//        val intentSFilter = IntentFilter("ServiceToActivityAction")
+//        registerReceiver(serviceReceiver, intentSFilter)
 
-        setContent {
+        lifecycleScope.launch {
+            timerManager.timer.collect { timer ->
+                hms = timer
+                setContent {
+                    LivecodingTheme {
+                        // A surface container using the 'background' color from the theme
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colors.background
+                        ) {
+//                    hms = "00:00:00"
+
+                            CountDownTimerUI(hms)
+                        }
+                    }
+                }
+            }
+        }
+
+
+       /* setContent {
             LivecodingTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    hms = "00:00:00"
+//                    hms = "00:00:00"
+
                    CountDownTimerUI(hms)
                 }
             }
-        }
+        }*/
     }
 
-    override fun onDestroy() {
+
+   /* override fun onDestroy() {
         super.onDestroy()
         unregisterReceiver(serviceReceiver);
-    }
+    }*/
 
     override fun onSaveInstanceState(outState: Bundle) { // Here You have to save count value
         super.onSaveInstanceState(outState)
@@ -74,31 +104,41 @@ class MainActivity : ComponentActivity() {
 
         hms = savedInstanceState.getString(COUNT_KEY).toString()
     }
+
+//    class ServiceToActivity : BroadcastReceiver() {
+//        var newData:String = "00:00:00"
+//        override fun onReceive(context: Context?, intent: Intent) {
+//            val notificationData = intent.extras
+//            newData = notificationData!!.getString("ServiceToActivityKey").toString()
+//            //Toast.makeText(context, " " + newData, Toast.LENGTH_SHORT).show()
+//
+//
+//        }
+//    }
+
+
 }
 
 
-class ServiceToActivity : BroadcastReceiver() {
-    override fun onReceive(context: Context?, intent: Intent) {
-        val notificationData = intent.extras
-        val newData1 = notificationData!!.getString("ServiceToActivityKey")
-        Toast.makeText(context, " " + newData1, Toast.LENGTH_SHORT).show()
-        // newData is from the service
-    }
-}
 
+@OptIn(InternalCoroutinesApi::class)
 @SuppressLint("UnspecifiedImmutableFlag")
 @Composable
-fun CountDownTimerUI(hms: String) {
+fun CountDownTimerUI(
+    hms: String
+) {
 
     var count by remember { mutableStateOf("0") }
-    if(!hms.equals("00:00:00")){
+    //d
+    Text(text = hms)
+   /* if(!hms.equals("00:00:00")){
         Text(text = "" + hms)
     }
     else{
         Text(text = "" + count)
     }
 
-
+*/
     var textFieldState by remember {
         mutableStateOf("")
     }
@@ -139,6 +179,9 @@ fun CountDownTimerUI(hms: String) {
 
                 if (!textFieldState.equals("")) {
                     buttonState = false
+
+
+                    count = hms
                 /*    object : CountDownTimer(textFieldState.toLong() * 1000 * 60, 1000) {
                         override fun onTick(millisUntilFinished: Long) {
                             val f: NumberFormat = DecimalFormat("00")
@@ -177,6 +220,6 @@ fun CountDownTimerUI(hms: String) {
 @Composable
 fun DefaultPreview() {
     LivecodingTheme {
-        CountDownTimerUI(hms = "")
+        //CountDownTimerUI(hms = "", lifecycleScope = lifecycleScope, timerManager = timerManager)
     }
 }

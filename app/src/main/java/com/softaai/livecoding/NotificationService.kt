@@ -9,6 +9,9 @@ import android.os.Build
 import android.os.CountDownTimer
 import android.os.IBinder
 import android.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import java.text.DecimalFormat
 import java.text.NumberFormat
 
@@ -26,6 +29,8 @@ class NotificationService : Service(){
     private val channelId = "com.softaai.livecoding.notifications"
     private val description = "Test Notification"
 
+    private val serviceScope = CoroutineScope(SupervisorJob())
+
     override fun onBind(arg0: Intent?): IBinder? {
         return null
     }
@@ -39,14 +44,14 @@ class NotificationService : Service(){
         super.onStartCommand(intent, flags, startId)
         val time = intent?.extras!!.getString("time")
 
-        initializeTimerTask(time)
+        initializeTimerTask(this, time)
         createTimerNotification()
         startForeground(
             1,
             notification
         )
 
-        return START_REDELIVER_INTENT
+        return START_STICKY
     }
 
 
@@ -55,7 +60,7 @@ class NotificationService : Service(){
         super.onDestroy()
     }
 
-    fun initializeTimerTask(time: String?) {
+    fun initializeTimerTask(context: Context, time: String?) {
 
 
         object : CountDownTimer(time!!.toLong() * 1000 * 60, 1000) {
@@ -66,8 +71,12 @@ class NotificationService : Service(){
                 val sec = millisUntilFinished / 1000 % 60
                 hms =
                     f.format(hour).toString() + ":" + f.format(min) + ":" + f.format(sec)
-                sendMessageToActivity(hms)
                 raiseNotification(builder, hms)
+                serviceScope.launch {
+                    //counterManager.setCounter(textInput.text.toString().toInt())
+                    TimerDataStoreManager(context).setTimer(hms)
+                }
+                //sendMessageToActivity(hms)
 
 
             }
