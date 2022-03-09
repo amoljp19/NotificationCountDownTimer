@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.*
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Build
 import android.os.CountDownTimer
 import android.os.IBinder
@@ -16,7 +15,7 @@ import java.text.DecimalFormat
 import java.text.NumberFormat
 
 
-class NotificationService : Service(){
+class NotificationService : Service() {
 
     var TAG = "Timers"
     var hms = "00:00:00"
@@ -73,17 +72,12 @@ class NotificationService : Service(){
                     f.format(hour).toString() + ":" + f.format(min) + ":" + f.format(sec)
                 raiseNotification(builder, hms)
                 serviceScope.launch {
-                    //counterManager.setCounter(textInput.text.toString().toInt())
                     TimerDataStoreManager(context).setTimer(hms)
                 }
-                //sendMessageToActivity(hms)
-
-
             }
 
             override fun onFinish() {
                 hms = "00:00:00"
-
             }
         }.start()
     }
@@ -91,13 +85,6 @@ class NotificationService : Service(){
     @SuppressLint("UnspecifiedImmutableFlag")
     private fun createTimerNotification() {
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-//        val notifyIntent = Intent(this, MainActivity::class.java).apply {
-//            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-//        }
-//        val notifyPendingIntent = PendingIntent.getActivity(
-//            this, 0, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT
-//        )
 
         val intent1 = Intent(this, MainActivity::class.java)
 
@@ -120,7 +107,6 @@ class NotificationService : Service(){
         }
 
         notification = builder.build()
-        //notificationManager.notify(1234, notification)
     }
 
     private fun raiseNotification(b: Notification.Builder, hms: String) {
@@ -129,12 +115,4 @@ class NotificationService : Service(){
 
         notificationManager.notify(1, b.build())
     }
-
-    private fun sendMessageToActivity(newData: String) {
-        val broadcastIntent = Intent()
-        broadcastIntent.action = "ServiceToActivityAction"
-        broadcastIntent.putExtra("ServiceToActivityKey", newData)
-        sendBroadcast(broadcastIntent)
-    }
-
 }
