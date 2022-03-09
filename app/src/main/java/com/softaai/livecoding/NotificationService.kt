@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Build
 import android.os.CountDownTimer
 import android.os.IBinder
@@ -12,7 +13,7 @@ import java.text.DecimalFormat
 import java.text.NumberFormat
 
 
-class NotificationService : Service() {
+class NotificationService : Service(){
 
     var TAG = "Timers"
     var hms = "00:00:00"
@@ -24,7 +25,6 @@ class NotificationService : Service() {
     lateinit var notification: Notification
     private val channelId = "com.softaai.livecoding.notifications"
     private val description = "Test Notification"
-
 
     override fun onBind(arg0: Intent?): IBinder? {
         return null
@@ -40,15 +40,14 @@ class NotificationService : Service() {
         val time = intent?.extras!!.getString("time")
 
         initializeTimerTask(time)
-        createTimerNotification(intent)
+        createTimerNotification()
         startForeground(
             1,
-           notification
+            notification
         )
 
-        return START_STICKY
+        return START_REDELIVER_INTENT
     }
-
 
 
     override fun onDestroy() {
@@ -58,6 +57,7 @@ class NotificationService : Service() {
 
     fun initializeTimerTask(time: String?) {
 
+
         object : CountDownTimer(time!!.toLong() * 1000 * 60, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 val f: NumberFormat = DecimalFormat("00")
@@ -66,25 +66,34 @@ class NotificationService : Service() {
                 val sec = millisUntilFinished / 1000 % 60
                 hms =
                     f.format(hour).toString() + ":" + f.format(min) + ":" + f.format(sec)
-
-               raiseNotification(builder, hms)
+                sendMessageToActivity(hms)
+                raiseNotification(builder, hms)
 
 
             }
 
             override fun onFinish() {
                 hms = "00:00:00"
+
             }
         }.start()
-
     }
 
     @SuppressLint("UnspecifiedImmutableFlag")
-    private fun createTimerNotification(intent: Intent) {
+    private fun createTimerNotification() {
         notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+//        val notifyIntent = Intent(this, MainActivity::class.java).apply {
+//            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+//        }
+//        val notifyPendingIntent = PendingIntent.getActivity(
+//            this, 0, notifyIntent, PendingIntent.FLAG_UPDATE_CURRENT
+//        )
+
+        val intent1 = Intent(this, MainActivity::class.java)
+
         val pendingIntent =
-            PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+            PendingIntent.getActivity(this, 0, intent1, PendingIntent.FLAG_UPDATE_CURRENT)
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             notificationChannel =
@@ -111,4 +120,12 @@ class NotificationService : Service() {
 
         notificationManager.notify(1, b.build())
     }
+
+    private fun sendMessageToActivity(newData: String) {
+        val broadcastIntent = Intent()
+        broadcastIntent.action = "ServiceToActivityAction"
+        broadcastIntent.putExtra("ServiceToActivityKey", newData)
+        sendBroadcast(broadcastIntent)
+    }
+
 }

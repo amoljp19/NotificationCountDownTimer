@@ -1,9 +1,14 @@
 package com.softaai.livecoding
 
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.os.CountDownTimer
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
@@ -22,8 +27,21 @@ import java.text.NumberFormat
 
 class MainActivity : ComponentActivity() {
 
+    companion object {
+        const val COUNT_KEY = "COUNT_KEY" // const key to save/read value from bundle
+    }
+
+    lateinit var hms:String
+
+    lateinit var serviceReceiver: ServiceToActivity
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        serviceReceiver = ServiceToActivity()
+        val intentSFilter = IntentFilter("ServiceToActivityAction")
+        registerReceiver(serviceReceiver, intentSFilter)
+
         setContent {
             LivecodingTheme {
                 // A surface container using the 'background' color from the theme
@@ -31,20 +49,55 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    CountDownTimerUI()
+                    hms = "00:00:00"
+                   CountDownTimerUI(hms)
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(serviceReceiver);
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) { // Here You have to save count value
+        super.onSaveInstanceState(outState)
+        Log.i("MyTag", "onSaveInstanceState")
+
+        outState.putString(COUNT_KEY, hms)
+    }
+
+    override fun onRestoreInstanceState(savedInstanceState: Bundle) { // Here You have to restore count value
+        super.onRestoreInstanceState(savedInstanceState)
+        Log.i("MyTag", "onRestoreInstanceState")
+
+        hms = savedInstanceState.getString(COUNT_KEY).toString()
+    }
+}
+
+
+class ServiceToActivity : BroadcastReceiver() {
+    override fun onReceive(context: Context?, intent: Intent) {
+        val notificationData = intent.extras
+        val newData1 = notificationData!!.getString("ServiceToActivityKey")
+        Toast.makeText(context, " " + newData1, Toast.LENGTH_SHORT).show()
+        // newData is from the service
     }
 }
 
 @SuppressLint("UnspecifiedImmutableFlag")
 @Composable
-fun CountDownTimerUI() {
+fun CountDownTimerUI(hms: String) {
 
     var count by remember { mutableStateOf("0") }
+    if(!hms.equals("00:00:00")){
+        Text(text = "" + hms)
+    }
+    else{
+        Text(text = "" + count)
+    }
 
-    Text(text = "" + count)
 
     var textFieldState by remember {
         mutableStateOf("")
@@ -86,7 +139,7 @@ fun CountDownTimerUI() {
 
                 if (!textFieldState.equals("")) {
                     buttonState = false
-                    object : CountDownTimer(textFieldState.toLong() * 1000 * 60, 1000) {
+                /*    object : CountDownTimer(textFieldState.toLong() * 1000 * 60, 1000) {
                         override fun onTick(millisUntilFinished: Long) {
                             val f: NumberFormat = DecimalFormat("00")
                             val hour = millisUntilFinished / 3600000 % 24
@@ -103,8 +156,7 @@ fun CountDownTimerUI() {
                             textFieldState = ""
                             buttonState = true
                         }
-                    }.start()
-
+                    }.start()*/
                     val intent = Intent(Intent(context, NotificationService::class.java))
 
                     intent.putExtra("time", textFieldState)
@@ -125,6 +177,6 @@ fun CountDownTimerUI() {
 @Composable
 fun DefaultPreview() {
     LivecodingTheme {
-        CountDownTimerUI()
+        CountDownTimerUI(hms = "")
     }
 }
